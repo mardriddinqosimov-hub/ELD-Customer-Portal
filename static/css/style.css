@@ -1873,7 +1873,7 @@ main {
 
 /* ── Page ── */
 body {
-    background: linear-gradient(160deg, #010801 0%, #030D04 30%, #020E06 60%, #010A02 85%, #000500 100%) !important;
+    background: linear-gradient(160deg, #040D00 0%, #0C2200 30%, #162C00 55%, #0E2000 80%, #050E00 100%) !important;
     color: var(--text-primary);
     min-height: 100vh;
 }
