@@ -305,7 +305,6 @@ def acknowledge_violation(current_user, violation_id):
 def get_devices(current_user):
     company = current_user.company
     devices = Device.query.filter_by(company_id=company.id).all()
-    cutoff = datetime.utcnow() - timedelta(days=30)
     devices_data = []
     for d in devices:
         reports = InspectionReport.query.filter_by(company_id=company.id, truck_id=d.id).all()
@@ -313,7 +312,7 @@ def get_devices(current_user):
             'id': d.id, 'device_id': d.device_id, 'device_name': d.device_name,
             'driver_name': d.driver_name,
             'status': d.status, 'last_sync': d.last_sync.isoformat(), 'created_at': d.created_at.isoformat(),
-            'inspections_last_month': sum(1 for r in reports if r.uploaded_at >= cutoff),
+            'inspections_total': len(reports),
             'eld_violations': sum(1 for r in reports if r.report_type == 'eld_violation')
         })
     return jsonify({'devices': devices_data, 'count': len(devices_data)}), 200
@@ -408,6 +407,19 @@ def update_truck(current_user, truck_id):
         return jsonify({'message': 'Truck not found'}), 404
 
     data = request.get_json(silent=True) or {}
+    if 'device_name' in data:
+        name = (data['device_name'] or '').strip()
+        if not name:
+            return jsonify({'message': 'Truck name cannot be empty'}), 400
+        truck.device_name = name
+    if 'device_id' in data:
+        new_id = (data['device_id'] or '').strip().upper()
+        if not new_id:
+            return jsonify({'message': 'Truck ID cannot be empty'}), 400
+        conflict = Device.query.filter_by(device_id=new_id).first()
+        if conflict and conflict.id != truck_id:
+            return jsonify({'message': 'Truck ID already in use'}), 400
+        truck.device_id = new_id
     if 'driver_name' in data:
         truck.driver_name = (data['driver_name'] or '').strip() or None
     if 'status' in data:

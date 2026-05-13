@@ -148,20 +148,30 @@ async function loadTrucks() {
                     <p><strong>Added:</strong> ${new Date(t.created_at).toLocaleDateString()}</p>
                 </div>
                 <div id="truck-edit-${t.id}" class="truck-edit-panel" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Truck Name / Unit #</label>
+                            <input type="text" id="truck-name-input-${t.id}" value="${escapeHtml(t.device_name)}" placeholder="e.g. Unit 001">
+                        </div>
+                        <div class="form-group">
+                            <label>Truck ID / License Plate</label>
+                            <input type="text" id="truck-id-input-${t.id}" value="${escapeHtml(t.device_id)}" placeholder="e.g. ABC-1234">
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label>Driver Name</label>
                         <input type="text" id="driver-input-${t.id}" value="${escapeHtml(t.driver_name || '')}" placeholder="Driver's full name">
                     </div>
                     <div class="truck-edit-actions">
-                        <button class="btn btn-sm btn-primary" onclick="saveDriver(${t.id})">Save</button>
+                        <button class="btn btn-sm btn-primary" onclick="saveTruck(${t.id})">Save</button>
                         <button class="btn btn-sm btn-secondary" onclick="hideTruckEdit(${t.id})">Cancel</button>
                         <button class="btn-deactivate btn-sm" onclick="setTruckInactive(${t.id})">Set Inactive</button>
                     </div>
                 </div>
                 <div class="device-summary">
                     <div class="summary-stat">
-                        <span class="summary-num">${t.inspections_last_month}</span>
-                        <span class="summary-label">Inspections (30d)</span>
+                        <span class="summary-num">${t.inspections_total}</span>
+                        <span class="summary-label">Inspections</span>
                     </div>
                     <div class="summary-stat ${t.eld_violations > 0 ? 'summary-danger' : 'summary-clean'}">
                         <span class="summary-num">${t.eld_violations}</span>
@@ -210,7 +220,7 @@ async function deleteTruck(truckId) {
 
 function showTruckEdit(truckId) {
     const panel = document.getElementById(`truck-edit-${truckId}`);
-    if (panel) { panel.style.display = 'block'; document.getElementById(`driver-input-${truckId}`).focus(); }
+    if (panel) { panel.style.display = 'block'; document.getElementById(`truck-name-input-${truckId}`).focus(); }
 }
 
 function hideTruckEdit(truckId) {
@@ -218,11 +228,17 @@ function hideTruckEdit(truckId) {
     if (panel) panel.style.display = 'none';
 }
 
-async function saveDriver(truckId) {
-    const name = document.getElementById(`driver-input-${truckId}`).value.trim();
+async function saveTruck(truckId) {
+    const deviceName = document.getElementById(`truck-name-input-${truckId}`).value.trim();
+    const deviceId = document.getElementById(`truck-id-input-${truckId}`).value.trim();
+    const driverName = document.getElementById(`driver-input-${truckId}`).value.trim();
+    if (!deviceName || !deviceId) {
+        showToast('Truck name and ID are required.', 'error');
+        return;
+    }
     try {
-        await api.updateTruck(truckId, { driver_name: name });
-        showToast('Driver updated!', 'success');
+        await api.updateTruck(truckId, { device_name: deviceName, device_id: deviceId, driver_name: driverName });
+        showToast('Truck updated!', 'success');
         await loadTrucks();
     } catch (error) {
         showToast(`Error: ${error.message}`, 'error');
@@ -494,7 +510,7 @@ function renderReportCard(r, trucks = []) {
     ` : '<span class="report-badge badge-pending">PENDING REVIEW</span>';
 
     const truckOptions = trucks.map(t =>
-        `<option value="${t.id}" ${r.truck_id == t.id ? 'selected' : ''}>${escapeHtml(t.device_name)} (${escapeHtml(t.device_id)})</option>`
+        `<option value="${t.id}" data-driver="${escapeHtml(t.driver_name || '')}" ${r.truck_id == t.id ? 'selected' : ''}>${escapeHtml(t.device_name)} (${escapeHtml(t.device_id)})</option>`
     ).join('');
 
     const reviewForm = isPending ? `
@@ -522,7 +538,7 @@ function renderReportCard(r, trucks = []) {
             <div class="form-row">
                 <div class="form-group">
                     <label>Truck</label>
-                    <select id="rtruck-${r.id}">
+                    <select id="rtruck-${r.id}" onchange="autoFillDriver(this, ${r.id})">
                         <option value="">— Select truck (optional) —</option>
                         ${truckOptions}
                     </select>
@@ -564,6 +580,15 @@ async function deleteReport(reportId) {
         await loadReports();
     } catch (error) {
         showToast(`Error: ${error.message}`, 'error');
+    }
+}
+
+function autoFillDriver(selectEl, reportId) {
+    const opt = selectEl.options[selectEl.selectedIndex];
+    const driverInput = document.getElementById(`rdriver-${reportId}`);
+    if (opt && driverInput) {
+        const driverFromTruck = opt.dataset.driver || '';
+        if (driverFromTruck) driverInput.value = driverFromTruck;
     }
 }
 
