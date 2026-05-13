@@ -92,13 +92,15 @@ class TestingConfig(Config):
 
 class ProductionConfig(Config):
     """Production Configuration"""
-    
+
     DEBUG = False
     TESTING = False
-    
+
     # Database - MUST be set in environment
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
-    
+    # Railway provides postgres:// but SQLAlchemy requires postgresql://
+    _db_url = os.getenv('DATABASE_URL', '')
+    SQLALCHEMY_DATABASE_URI = _db_url.replace('postgres://', 'postgresql://', 1) if _db_url else None
+
     # Secret Key - MUST be set in environment
     SECRET_KEY = os.getenv('SECRET_KEY')
     
