@@ -18,7 +18,7 @@ if str(project_root) not in os.sys.path:
     os.sys.path.insert(0, str(project_root))
 
 # Import and create Flask app
-from app import create_app, db
+from app import create_app, db, migrate_db
 
 # Create Flask application instance
 app = create_app(os.getenv('FLASK_ENV', 'production'))
@@ -42,6 +42,8 @@ try:
             logger.info("Database tables created successfully")
         else:
             logger.info("Database tables already exist")
+        migrate_db()
+        logger.info("DB migrations applied")
 except Exception as e:
     logger.error(f"Error initializing database: {e}")
     raise

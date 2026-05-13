@@ -18,7 +18,7 @@ from config import get_config
 load_dotenv()
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
-ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png'}
+ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'pdf'}
 
 def allowed_image(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
@@ -105,6 +105,7 @@ class Device(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
     device_id = db.Column(db.String(100), unique=True, nullable=False)
     device_name = db.Column(db.String(255), nullable=False)
+    driver_name = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(50), default='active')
     last_sync = db.Column(db.DateTime, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -158,6 +159,7 @@ class InspectionReport(db.Model):
     severity = db.Column(db.String(50), nullable=True)
     notes = db.Column(db.Text, nullable=True)
     linked_violation_id = db.Column(db.Integer, nullable=True)
+    truck_id = db.Column(db.Integer, nullable=True)
 
 # ============================================================================
 # AUTHENTICATION
@@ -303,11 +305,17 @@ def acknowledge_violation(current_user, violation_id):
 def get_devices(current_user):
     company = current_user.company
     devices = Device.query.filter_by(company_id=company.id).all()
-    devices_data = [{
-        'id': d.id, 'device_id': d.device_id, 'device_name': d.device_name,
-        'status': d.status, 'last_sync': d.last_sync.isoformat(), 'created_at': d.created_at.isoformat()
-    } for d in devices]
-    
+    cutoff = datetime.utcnow() - timedelta(days=30)
+    devices_data = []
+    for d in devices:
+        reports = InspectionReport.query.filter_by(company_id=company.id, truck_id=d.id).all()
+        devices_data.append({
+            'id': d.id, 'device_id': d.device_id, 'device_name': d.device_name,
+            'driver_name': d.driver_name,
+            'status': d.status, 'last_sync': d.last_sync.isoformat(), 'created_at': d.created_at.isoformat(),
+            'inspections_last_month': sum(1 for r in reports if r.uploaded_at >= cutoff),
+            'eld_violations': sum(1 for r in reports if r.report_type == 'eld_violation')
+        })
     return jsonify({'devices': devices_data, 'count': len(devices_data)}), 200
 
 @app.route('/api/faqs', methods=['GET'])
@@ -384,6 +392,7 @@ def add_truck(current_user):
         company_id=current_user.company_id,
         device_id=truck_id,
         device_name=data['truck_name'].strip(),
+        driver_name=(data.get('driver_name') or '').strip() or None,
         status='active'
     )
     db.session.add(truck)
@@ -514,13 +523,20 @@ def upload_image(current_user):
 def get_reports(current_user):
     reports = InspectionReport.query.filter_by(company_id=current_user.company_id)\
         .order_by(InspectionReport.uploaded_at.desc()).all()
-    return jsonify({'reports': [{
-        'id': r.id, 'filename': r.filename, 'url': r.url,
-        'uploaded_at': r.uploaded_at.isoformat(),
-        'status': r.status, 'report_type': r.report_type,
-        'driver_name': r.driver_name, 'severity': r.severity,
-        'notes': r.notes, 'linked_violation_id': r.linked_violation_id
-    } for r in reports]}), 200
+    result = []
+    for r in reports:
+        truck = Device.query.filter_by(id=r.truck_id, company_id=current_user.company_id).first() if r.truck_id else None
+        result.append({
+            'id': r.id, 'filename': r.filename, 'url': r.url,
+            'uploaded_at': r.uploaded_at.isoformat(),
+            'status': r.status, 'report_type': r.report_type,
+            'driver_name': r.driver_name, 'severity': r.severity,
+            'notes': r.notes, 'linked_violation_id': r.linked_violation_id,
+            'truck_id': r.truck_id,
+            'truck_name': truck.device_name if truck else None,
+            'truck_unit_id': truck.device_id if truck else None
+        })
+    return jsonify({'reports': result}), 200
 
 
 @app.route('/api/reports/<int:report_id>/review', methods=['POST'])
@@ -540,6 +556,8 @@ def review_report(current_user, report_id):
     report.driver_name = (data.get('driver_name') or '').strip() or None
     report.notes = (data.get('notes') or '').strip() or None
     report.severity = data.get('severity', 'medium')
+    truck_id = data.get('truck_id')
+    report.truck_id = int(truck_id) if truck_id else None
 
     if report_type == 'eld_violation':
         violation = Violation(
@@ -605,9 +623,23 @@ def internal_error(error):
 # DATABASE INITIALIZATION
 # ============================================================================
 
+def migrate_db():
+    """Add new columns to existing tables without dropping data."""
+    migrations = [
+        'ALTER TABLE devices ADD COLUMN driver_name VARCHAR(255)',
+        'ALTER TABLE inspection_reports ADD COLUMN truck_id INTEGER',
+    ]
+    for sql in migrations:
+        try:
+            db.session.execute(db.text(sql))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
 def init_db():
     with app.app_context():
         db.create_all()
+        migrate_db()
         
         if Company.query.first():
             print("Database already initialized")

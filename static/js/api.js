@@ -91,8 +91,8 @@ class APIClient {
         return this.request('GET', '/compliance-report');
     }
 
-    addTruck(truck_name, truck_id) {
-        return this.request('POST', '/trucks', { truck_name, truck_id });
+    addTruck(truck_name, truck_id, driver_name = '') {
+        return this.request('POST', '/trucks', { truck_name, truck_id, driver_name });
     }
 
     deleteTruck(id) {

@@ -48,7 +48,6 @@ function switchView(viewName) {
     });
     if (viewName === 'violations') loadViolations(30);
     if (viewName === 'trucks') loadTrucks();
-    if (viewName === 'upload') loadImages();
     if (viewName === 'reports') loadReports();
 }
 
@@ -117,8 +116,18 @@ async function loadTrucks() {
                 </div>
                 <div class="device-body">
                     <p><strong>Truck ID:</strong> ${escapeHtml(t.device_id)}</p>
-                    <p><strong>Last Sync:</strong> ${new Date(t.last_sync).toLocaleString()}</p>
+                    <p><strong>Driver:</strong> ${t.driver_name ? escapeHtml(t.driver_name) : '<span style="color:var(--text-secondary)">Not assigned</span>'}</p>
                     <p><strong>Added:</strong> ${new Date(t.created_at).toLocaleDateString()}</p>
+                </div>
+                <div class="device-summary">
+                    <div class="summary-stat">
+                        <span class="summary-num">${t.inspections_last_month}</span>
+                        <span class="summary-label">Inspections (30d)</span>
+                    </div>
+                    <div class="summary-stat ${t.eld_violations > 0 ? 'summary-danger' : 'summary-clean'}">
+                        <span class="summary-num">${t.eld_violations}</span>
+                        <span class="summary-label">ELD Violations</span>
+                    </div>
                 </div>
             </div>
         `).join('');
@@ -137,8 +146,9 @@ async function addTruck(event) {
     event.preventDefault();
     const name = document.getElementById('truck-name').value.trim();
     const id = document.getElementById('truck-unit-id').value.trim();
+    const driverName = document.getElementById('truck-driver-name').value.trim();
     try {
-        await api.addTruck(name, id);
+        await api.addTruck(name, id, driverName);
         document.getElementById('add-truck-form').reset();
         toggleAddTruckForm();
         await loadTrucks();
@@ -315,8 +325,9 @@ async function loadReports() {
     const container = document.getElementById('reports-list');
     container.innerHTML = '<p class="loading">Loading reports...</p>';
     try {
-        const response = await api.getReports();
-        const reports = response.reports;
+        const [reportRes, truckRes] = await Promise.all([api.getReports(), api.getDevices()]);
+        const reports = reportRes.reports;
+        const trucks = truckRes.devices;
         if (!reports.length) {
             container.innerHTML = `
                 <div class="empty-state">
@@ -326,12 +337,11 @@ async function loadReports() {
                         </svg>
                     </div>
                     <h3>No reports yet</h3>
-                    <p>Upload photos of inspection reports and violation papers in the Upload Data tab.</p>
-                    <button class="btn btn-primary" onclick="switchView('upload')">Go to Upload Data</button>
+                    <p>Upload a photo or PDF of an inspection report using the upload area above.</p>
                 </div>`;
             return;
         }
-        container.innerHTML = reports.map(r => renderReportCard(r)).join('');
+        container.innerHTML = reports.map(r => renderReportCard(r, trucks)).join('');
         container.querySelectorAll('.report-thumb[data-url]').forEach(img => {
             img.addEventListener('click', () => window.open(img.dataset.url, '_blank'));
         });
@@ -343,19 +353,32 @@ async function loadReports() {
     }
 }
 
-function renderReportCard(r) {
+function renderReportCard(r, trucks = []) {
     const isPending = r.status === 'pending_review';
     const typeLabel = { eld_violation: 'ELD VIOLATION', other_violation: 'OTHER VIOLATION', clean: 'NO VIOLATION / CLEAN' };
     const typeCls = { eld_violation: 'badge-danger', other_violation: 'badge-warning', clean: 'badge-success' };
     const displayName = escapeHtml(r.filename.split('_').slice(2).join('_') || r.filename);
+    const isPdf = r.filename.toLowerCase().endsWith('.pdf');
+
+    const thumbHtml = isPdf
+        ? `<a class="report-thumb report-thumb-pdf" href="${escapeHtml(r.url)}" target="_blank">
+               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="36" height="36"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+               <span>PDF</span>
+           </a>`
+        : `<img class="report-thumb" src="${escapeHtml(r.url)}" alt="Report" data-url="${escapeHtml(r.url)}">`;
 
     const reviewedInfo = !isPending ? `
         <span class="report-badge ${typeCls[r.report_type] || 'badge-success'}">${typeLabel[r.report_type] || 'REVIEWED'}</span>
+        ${r.truck_name ? `<p class="report-driver"><strong>Truck:</strong> ${escapeHtml(r.truck_name)} (${escapeHtml(r.truck_unit_id || '')})</p>` : ''}
         ${r.driver_name ? `<p class="report-driver"><strong>Driver:</strong> ${escapeHtml(r.driver_name)}</p>` : ''}
         ${r.severity ? `<p class="report-driver"><strong>Severity:</strong> ${escapeHtml(r.severity)}</p>` : ''}
         ${r.notes ? `<p class="report-notes">${escapeHtml(r.notes)}</p>` : ''}
         ${r.report_type === 'eld_violation' ? '<p class="report-link">ELD violation recorded — visible in Violations tab</p>' : ''}
     ` : '<span class="report-badge badge-pending">PENDING REVIEW</span>';
+
+    const truckOptions = trucks.map(t =>
+        `<option value="${t.id}" ${r.truck_id == t.id ? 'selected' : ''}>${escapeHtml(t.device_name)} (${escapeHtml(t.device_id)})</option>`
+    ).join('');
 
     const reviewForm = isPending ? `
         <div class="report-review-form">
@@ -379,9 +402,18 @@ function renderReportCard(r) {
                     </select>
                 </div>
             </div>
-            <div class="form-group">
-                <label>Driver Name</label>
-                <input type="text" id="rdriver-${r.id}" placeholder="Driver name (if applicable)">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Truck</label>
+                    <select id="rtruck-${r.id}">
+                        <option value="">— Select truck (optional) —</option>
+                        ${truckOptions}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Driver Name</label>
+                    <input type="text" id="rdriver-${r.id}" placeholder="Driver name (if applicable)">
+                </div>
             </div>
             <div class="form-group">
                 <label>Notes / Description</label>
@@ -394,7 +426,7 @@ function renderReportCard(r) {
     return `
         <div class="report-card ${isPending ? 'status-pending' : 'status-' + escapeHtml(r.report_type || 'clean')}">
             <div class="report-card-main">
-                <img class="report-thumb" src="${escapeHtml(r.url)}" alt="Report" data-url="${escapeHtml(r.url)}">
+                ${thumbHtml}
                 <div class="report-meta">
                     <p class="report-filename">${displayName}</p>
                     <p class="report-date">${new Date(r.uploaded_at).toLocaleString()}</p>
@@ -411,11 +443,13 @@ async function submitReview(reportId) {
     const severity = document.getElementById(`rseverity-${reportId}`).value;
     const driverName = document.getElementById(`rdriver-${reportId}`).value.trim();
     const notes = document.getElementById(`rnotes-${reportId}`).value.trim();
+    const truckEl = document.getElementById(`rtruck-${reportId}`);
+    const truckId = truckEl && truckEl.value ? parseInt(truckEl.value) : null;
     const btn = document.getElementById(`rbtn-${reportId}`);
     btn.disabled = true;
     btn.textContent = 'Submitting...';
     try {
-        await api.reviewReport(reportId, { report_type: reportType, severity, driver_name: driverName, notes });
+        await api.reviewReport(reportId, { report_type: reportType, severity, driver_name: driverName, notes, truck_id: truckId });
         showToast('Report reviewed!', 'success');
         if (reportType === 'eld_violation') showToast('ELD violation added to Violations tab', 'info');
         await loadReports();
@@ -440,7 +474,7 @@ async function handleImageUpload(event) {
     try {
         const result = await api.uploadImage(file);
         setUploadStatus('image-upload-status', `&#10003; ${result.message}`, 'success');
-        await loadImages();
+        await loadReports();
     } catch (error) {
         setUploadStatus('image-upload-status', `Error: ${error.message}`, 'error');
     }

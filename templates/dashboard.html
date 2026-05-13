@@ -14,10 +14,9 @@
             <div class="logo">ELD Portal</div>
             <div class="nav-menu">
                 <a href="#dashboard" class="nav-link active" onclick="switchView('dashboard')">Dashboard</a>
-                <a href="#violations" class="nav-link" onclick="switchView('violations')">Violations</a>
                 <a href="#trucks" class="nav-link" onclick="switchView('trucks')">Trucks</a>
-                <a href="#upload" class="nav-link" onclick="switchView('upload')">Upload Data</a>
                 <a href="#reports" class="nav-link" onclick="switchView('reports')">Reports</a>
+                <a href="#violations" class="nav-link" onclick="switchView('violations')">Violations</a>
                 <a href="#support" class="nav-link" onclick="switchView('support')">Support</a>
                 <a href="#faq" class="nav-link" onclick="switchView('faq')">FAQ</a>
                 <button class="logout-btn" onclick="logout()">Logout</button>
@@ -143,6 +142,10 @@
                             <input type="text" id="truck-unit-id" required placeholder="e.g. ABC-1234 or TRUCK-001">
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label>Driver Name <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label>
+                        <input type="text" id="truck-driver-name" placeholder="Assigned driver's full name">
+                    </div>
                     <div class="form-btn-row">
                         <button type="submit" class="btn btn-primary">Save Truck</button>
                         <button type="button" class="btn btn-secondary" onclick="toggleAddTruckForm()">Cancel</button>
@@ -155,93 +158,40 @@
             </div>
         </div>
 
-        <!-- Upload Data View -->
-        <div id="upload-view" class="view">
+        <!-- Reports View (includes upload + review) -->
+        <div id="reports-view" class="view">
             <div class="header">
-                <h1>Upload Data</h1>
-                <p>Import violation records and truck lists from CSV, or upload photos of inspection reports and violation papers</p>
+                <h1>Reports</h1>
+                <p>Upload and review inspection documents — classify each as ELD violation, other violation, or clean</p>
             </div>
 
-            <!-- Upload Violations -->
+            <!-- Upload Section -->
             <div class="section">
-                <h2>Upload Violation Records</h2>
-                <p style="color:var(--text-secondary);margin-bottom:var(--spacing-lg);">Import driver violation records from your ELD provider's CSV export.</p>
-                <div class="csv-format">
-                    <strong>Required CSV columns:</strong>
-                    <code>driver_name, violation_type, severity, description, violation_date, potential_fine</code>
-                    <br><strong>Severity values:</strong> critical | high | medium | low &nbsp;&nbsp; <strong>Date format:</strong> YYYY-MM-DD
-                </div>
-                <div class="upload-area" onclick="document.getElementById('violations-file').click()">
-                    <div class="upload-area-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="48" height="48">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                        </svg>
-                    </div>
-                    <p class="upload-area-title">Click to select violations CSV file</p>
-                    <p class="upload-area-sub">Supports .csv files up to 500 rows</p>
-                </div>
-                <input type="file" id="violations-file" accept=".csv" style="display:none" onchange="handleViolationsUpload(event)">
-                <div id="violations-upload-status"></div>
-                <div class="upload-actions">
-                    <button class="btn btn-secondary" onclick="downloadViolationsTemplate()">Download Template CSV</button>
-                </div>
-            </div>
-
-            <!-- Upload Violation Papers -->
-            <div class="section">
-                <h2>Upload Violation &amp; Inspection Reports</h2>
-                <p style="color:var(--text-secondary);margin-bottom:var(--spacing-lg);">Upload photos of roadside inspection reports, Driver/Vehicle Inspection Reports (DVIR), violation tickets, and other paper documents for your records.</p>
+                <h2>Upload Inspection Report</h2>
+                <p style="color:var(--text-secondary);margin-bottom:var(--spacing-lg);">Upload photos or PDFs of roadside inspection reports, DVIRs, violation tickets, and other paper documents.</p>
                 <div class="csv-format">
                     <strong>Examples:</strong> Roadside inspection reports, DVIR forms, violation citations, officer notices
-                    <br><strong>Accepted formats:</strong> JPG, JPEG, PNG &nbsp;&nbsp; <strong>Max size:</strong> 10 MB per image
+                    <br><strong>Accepted formats:</strong> JPG, JPEG, PNG, PDF &nbsp;&nbsp; <strong>Max size:</strong> 10 MB
                 </div>
                 <div class="upload-area" onclick="document.getElementById('image-file').click()">
                     <div class="upload-area-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="48" height="48">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
-                        </svg>
-                    </div>
-                    <p class="upload-area-title">Click to upload inspection report or violation paper</p>
-                    <p class="upload-area-sub">Take a photo of the paper document — JPG or PNG, up to 10 MB</p>
-                </div>
-                <input type="file" id="image-file" accept=".jpg,.jpeg,.png" style="display:none" onchange="handleImageUpload(event)">
-                <div id="image-upload-status"></div>
-                <div id="image-gallery" class="image-gallery"></div>
-            </div>
-
-            <!-- Upload Trucks -->
-            <div class="section">
-                <h2>Bulk Add Trucks</h2>
-                <p style="color:var(--text-secondary);margin-bottom:var(--spacing-lg);">Add multiple trucks at once by uploading a CSV file.</p>
-                <div class="csv-format">
-                    <strong>Required CSV columns:</strong>
-                    <code>truck_name, truck_id</code>
-                </div>
-                <div class="upload-area" onclick="document.getElementById('trucks-file').click()">
-                    <div class="upload-area-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="48" height="48">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                         </svg>
                     </div>
-                    <p class="upload-area-title">Click to select trucks CSV file</p>
-                    <p class="upload-area-sub">Supports .csv files up to 200 rows</p>
+                    <p class="upload-area-title">Click to upload inspection report or violation paper</p>
+                    <p class="upload-area-sub">JPG, JPEG, PNG, or PDF — up to 10 MB</p>
                 </div>
-                <input type="file" id="trucks-file" accept=".csv" style="display:none" onchange="handleTrucksUpload(event)">
-                <div id="trucks-upload-status"></div>
-                <div class="upload-actions">
-                    <button class="btn btn-secondary" onclick="downloadTrucksTemplate()">Download Template CSV</button>
-                </div>
+                <input type="file" id="image-file" accept=".jpg,.jpeg,.png,.pdf" style="display:none" onchange="handleImageUpload(event)">
+                <div id="image-upload-status"></div>
             </div>
-        </div>
 
-        <!-- Reports View -->
-        <div id="reports-view" class="view">
-            <div class="header">
-                <h1>Inspection Reports</h1>
-                <p>Review uploaded inspection documents — classify each as ELD violation, other violation, or clean</p>
-            </div>
-            <div id="reports-list">
-                <p class="loading">Loading reports...</p>
+            <!-- Reports List -->
+            <div class="section">
+                <h2>Uploaded Reports</h2>
+                <div id="reports-list">
+                    <p class="loading">Loading reports...</p>
+                </div>
             </div>
         </div>
 
