@@ -125,7 +125,21 @@
                     <h1>Your Trucks</h1>
                     <p>Manage your fleet of ELD-equipped trucks</p>
                 </div>
-                <button class="btn btn-primary" onclick="toggleAddTruckForm()">+ Add Truck</button>
+                <div style="display:flex;gap:var(--spacing-sm);">
+                    <button class="btn btn-inactives" onclick="openInactivesModal()">Inactives <span id="inactives-count" class="inactives-badge" style="display:none;"></span></button>
+                    <button class="btn btn-primary" onclick="toggleAddTruckForm()">+ Add Truck</button>
+                </div>
+            </div>
+
+            <!-- Inactives Modal -->
+            <div id="inactives-modal" class="modal-overlay" style="display:none;" onclick="closeInactivesModal(event)">
+                <div class="modal-box">
+                    <div class="modal-header">
+                        <h2>Inactive Trucks</h2>
+                        <button class="modal-close" onclick="closeInactivesModal()">&#x2715;</button>
+                    </div>
+                    <div id="inactives-list"><p class="loading">Loading...</p></div>
+                </div>
             </div>
 
             <!-- Add Truck Form -->

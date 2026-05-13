@@ -105,34 +105,58 @@ async function loadTrucks() {
                 </div>`;
             return;
         }
-        container.innerHTML = trucks.map(t => {
-            const isActive = t.status === 'active';
+        const activeTrucks = trucks.filter(t => t.status === 'active');
+        const inactiveCount = trucks.length - activeTrucks.length;
+        const badge = document.getElementById('inactives-count');
+        if (badge) {
+            if (inactiveCount > 0) { badge.textContent = inactiveCount; badge.style.display = 'inline'; }
+            else { badge.style.display = 'none'; }
+        }
+
+        if (!activeTrucks.length) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="64" height="64">
+                            <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                        </svg>
+                    </div>
+                    <h3>No active trucks</h3>
+                    <p>${inactiveCount > 0 ? `${inactiveCount} truck(s) are inactive. Click "Inactives" to reactivate.` : 'Add your first truck to start tracking ELD compliance.'}</p>
+                    <button class="btn btn-primary" onclick="toggleAddTruckForm()">+ Add Your First Truck</button>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = activeTrucks.map(t => {
             const driverDisplay = t.driver_name
                 ? escapeHtml(t.driver_name)
                 : '<span style="color:var(--text-secondary)">Not assigned</span>';
             return `
-            <div class="device-card status-${escapeHtml(t.status)}">
+            <div class="device-card status-active">
                 <div class="device-header">
                     <h3>${escapeHtml(t.device_name)}</h3>
                     <div class="device-header-actions">
-                        <span class="device-status">${escapeHtml(t.status).toUpperCase()}</span>
-                        <button class="${isActive ? 'btn-deactivate' : 'btn-activate'}" onclick="toggleTruckStatus(${t.id}, '${isActive ? 'inactive' : 'active'}')">${isActive ? 'Set Inactive' : 'Set Active'}</button>
+                        <span class="device-status">ACTIVE</span>
+                        <button class="btn-truck-edit" onclick="showTruckEdit(${t.id})">Edit</button>
                         <button class="btn-remove" onclick="deleteTruck(${t.id})">Remove</button>
                     </div>
                 </div>
                 <div class="device-body">
                     <p><strong>Truck ID:</strong> ${escapeHtml(t.device_id)}</p>
-                    <p class="driver-row">
-                        <strong>Driver:</strong>
-                        <span id="driver-display-${t.id}">${driverDisplay}</span>
-                        <button class="btn-link driver-edit-btn" id="driver-edit-btn-${t.id}" onclick="showDriverEdit(${t.id})">Edit</button>
-                    </p>
-                    <div id="driver-edit-${t.id}" class="driver-edit-row" style="display:none;">
-                        <input type="text" id="driver-input-${t.id}" value="${escapeHtml(t.driver_name || '')}" placeholder="Driver's full name">
-                        <button class="btn btn-sm btn-primary" onclick="saveDriver(${t.id})">Save</button>
-                        <button class="btn btn-sm btn-secondary" onclick="hideDriverEdit(${t.id})">Cancel</button>
-                    </div>
+                    <p><strong>Driver:</strong> ${driverDisplay}</p>
                     <p><strong>Added:</strong> ${new Date(t.created_at).toLocaleDateString()}</p>
+                </div>
+                <div id="truck-edit-${t.id}" class="truck-edit-panel" style="display:none;">
+                    <div class="form-group">
+                        <label>Driver Name</label>
+                        <input type="text" id="driver-input-${t.id}" value="${escapeHtml(t.driver_name || '')}" placeholder="Driver's full name">
+                    </div>
+                    <div class="truck-edit-actions">
+                        <button class="btn btn-sm btn-primary" onclick="saveDriver(${t.id})">Save</button>
+                        <button class="btn btn-sm btn-secondary" onclick="hideTruckEdit(${t.id})">Cancel</button>
+                        <button class="btn-deactivate btn-sm" onclick="setTruckInactive(${t.id})">Set Inactive</button>
+                    </div>
                 </div>
                 <div class="device-summary">
                     <div class="summary-stat">
@@ -184,29 +208,14 @@ async function deleteTruck(truckId) {
     }
 }
 
-async function toggleTruckStatus(truckId, newStatus) {
-    const label = newStatus === 'inactive' ? 'mark as inactive' : 'reactivate';
-    if (!confirm(`Are you sure you want to ${label} this truck?`)) return;
-    try {
-        await api.updateTruck(truckId, { status: newStatus });
-        await loadTrucks();
-        showToast(newStatus === 'inactive' ? 'Truck set to inactive.' : 'Truck reactivated.', 'success');
-    } catch (error) {
-        showToast(`Error: ${error.message}`, 'error');
-    }
+function showTruckEdit(truckId) {
+    const panel = document.getElementById(`truck-edit-${truckId}`);
+    if (panel) { panel.style.display = 'block'; document.getElementById(`driver-input-${truckId}`).focus(); }
 }
 
-function showDriverEdit(truckId) {
-    document.getElementById(`driver-display-${truckId}`).style.display = 'none';
-    document.getElementById(`driver-edit-btn-${truckId}`).style.display = 'none';
-    document.getElementById(`driver-edit-${truckId}`).style.display = 'flex';
-    document.getElementById(`driver-input-${truckId}`).focus();
-}
-
-function hideDriverEdit(truckId) {
-    document.getElementById(`driver-display-${truckId}`).style.display = '';
-    document.getElementById(`driver-edit-btn-${truckId}`).style.display = '';
-    document.getElementById(`driver-edit-${truckId}`).style.display = 'none';
+function hideTruckEdit(truckId) {
+    const panel = document.getElementById(`truck-edit-${truckId}`);
+    if (panel) panel.style.display = 'none';
 }
 
 async function saveDriver(truckId) {
@@ -217,6 +226,60 @@ async function saveDriver(truckId) {
         await loadTrucks();
     } catch (error) {
         showToast(`Error: ${error.message}`, 'error');
+    }
+}
+
+async function setTruckInactive(truckId) {
+    if (!confirm('Mark this truck as inactive? It will move to the Inactives list.')) return;
+    try {
+        await api.updateTruck(truckId, { status: 'inactive' });
+        await loadTrucks();
+        showToast('Truck set to inactive.', 'success');
+    } catch (error) {
+        showToast(`Error: ${error.message}`, 'error');
+    }
+}
+
+async function openInactivesModal() {
+    const modal = document.getElementById('inactives-modal');
+    modal.style.display = 'flex';
+    const list = document.getElementById('inactives-list');
+    list.innerHTML = '<p class="loading">Loading...</p>';
+    try {
+        const res = await api.getDevices();
+        const inactive = res.devices.filter(t => t.status !== 'active');
+        if (!inactive.length) {
+            list.innerHTML = '<p class="no-data">No inactive trucks right now.</p>';
+            return;
+        }
+        list.innerHTML = inactive.map(t => `
+            <div class="inactive-truck-row">
+                <div class="inactive-truck-info">
+                    <strong>${escapeHtml(t.device_name)}</strong>
+                    <span>ID: ${escapeHtml(t.device_id)}${t.driver_name ? ' &nbsp;·&nbsp; Driver: ' + escapeHtml(t.driver_name) : ''}</span>
+                </div>
+                <button class="btn-activate" onclick="reactivateTruck(${t.id})">Set Active</button>
+            </div>
+        `).join('');
+    } catch(e) {
+        list.innerHTML = '<p class="no-data">Error loading trucks.</p>';
+    }
+}
+
+function closeInactivesModal(event) {
+    if (!event || event.target === document.getElementById('inactives-modal')) {
+        document.getElementById('inactives-modal').style.display = 'none';
+    }
+}
+
+async function reactivateTruck(truckId) {
+    try {
+        await api.updateTruck(truckId, { status: 'active' });
+        showToast('Truck reactivated!', 'success');
+        await loadTrucks();
+        await openInactivesModal();
+    } catch(e) {
+        showToast(`Error: ${e.message}`, 'error');
     }
 }
 
