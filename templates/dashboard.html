@@ -1,0 +1,340 @@
+﻿<!-- templates/dashboard.html - Customer Dashboard -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELD Customer Portal - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="logo">ELD Portal</div>
+            <div class="nav-menu">
+                <a href="#dashboard" class="nav-link active" onclick="switchView('dashboard')">Dashboard</a>
+                <a href="#violations" class="nav-link" onclick="switchView('violations')">Violations</a>
+                <a href="#trucks" class="nav-link" onclick="switchView('trucks')">Trucks</a>
+                <a href="#upload" class="nav-link" onclick="switchView('upload')">Upload Data</a>
+                <a href="#reports" class="nav-link" onclick="switchView('reports')">Reports</a>
+                <a href="#support" class="nav-link" onclick="switchView('support')">Support</a>
+                <a href="#faq" class="nav-link" onclick="switchView('faq')">FAQ</a>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Dashboard View -->
+        <div id="dashboard-view" class="view active">
+            <div class="header">
+                <h1>Your ELD Dashboard</h1>
+                <p id="company-name"></p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">%</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Compliance Score</div>
+                        <div class="stat-value" id="compliance-score">-</div>
+                        <div class="stat-status" id="compliance-status">Loading...</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="36" height="36">
+                            <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Active Trucks</div>
+                        <div class="stat-value" id="active-devices">-</div>
+                        <div class="stat-status" id="total-devices">Total: -</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">!</div>
+                    <div class="stat-content">
+                        <div class="stat-label">This Month</div>
+                        <div class="stat-value" id="violations-month">-</div>
+                        <div class="stat-status">Violations detected</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">$</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Fines Avoided</div>
+                        <div class="stat-value" id="fines-avoided">-</div>
+                        <div class="stat-status">Estimated savings</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Violations -->
+            <div class="section">
+                <div class="section-header">
+                    <h2>Recent Violations</h2>
+                    <button class="btn-link" onclick="switchView('violations')">View All</button>
+                </div>
+                <div id="recent-violations" class="violation-list">
+                    <p class="loading">Loading violations...</p>
+                </div>
+            </div>
+
+            <!-- Compliance Status -->
+            <div class="section">
+                <h2>Compliance Status</h2>
+                <div class="status-content">
+                    <p id="compliance-message">Loading...</p>
+                    <button class="btn btn-primary" onclick="downloadReport()">Download Report</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Violations View -->
+        <div id="violations-view" class="view">
+            <div class="header">
+                <h1>Violations</h1>
+                <div class="filters">
+                    <label>Days:
+                        <select onchange="loadViolations(this.value)">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                            <option value="all">All time</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+
+            <div id="all-violations" class="violation-list">
+                <p class="loading">Loading violations...</p>
+            </div>
+        </div>
+
+        <!-- Trucks View -->
+        <div id="trucks-view" class="view">
+            <div class="header view-header-row">
+                <div>
+                    <h1>Your Trucks</h1>
+                    <p>Manage your fleet of ELD-equipped trucks</p>
+                </div>
+                <button class="btn btn-primary" onclick="toggleAddTruckForm()">+ Add Truck</button>
+            </div>
+
+            <!-- Add Truck Form -->
+            <div id="add-truck-section" class="section" style="display:none;">
+                <h2>Add New Truck</h2>
+                <form id="add-truck-form" onsubmit="addTruck(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Truck Name / Unit #</label>
+                            <input type="text" id="truck-name" required placeholder="e.g. Unit 001 or Big Blue">
+                        </div>
+                        <div class="form-group">
+                            <label>Truck ID / License Plate</label>
+                            <input type="text" id="truck-unit-id" required placeholder="e.g. ABC-1234 or TRUCK-001">
+                        </div>
+                    </div>
+                    <div class="form-btn-row">
+                        <button type="submit" class="btn btn-primary">Save Truck</button>
+                        <button type="button" class="btn btn-secondary" onclick="toggleAddTruckForm()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="trucks-list" class="devices-grid">
+                <p class="loading">Loading trucks...</p>
+            </div>
+        </div>
+
+        <!-- Upload Data View -->
+        <div id="upload-view" class="view">
+            <div class="header">
+                <h1>Upload Data</h1>
+                <p>Import violation records and truck lists from CSV, or upload photos of inspection reports and violation papers</p>
+            </div>
+
+            <!-- Upload Violations -->
+            <div class="section">
+                <h2>Upload Violation Records</h2>
+                <p style="color:var(--text-secondary);margin-bottom:var(--spacing-lg);">Import driver violation records from your ELD provider's CSV export.</p>
+                <div class="csv-format">
+                    <strong>Required CSV columns:</strong>
+                    <code>driver_name, violation_type, severity, description, violation_date, potential_fine</code>
+                    <br><strong>Severity values:</strong> critical | high | medium | low &nbsp;&nbsp; <strong>Date format:</strong> YYYY-MM-DD
+                </div>
+                <div class="upload-area" onclick="document.getElementById('violations-file').click()">
+                    <div class="upload-area-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="48" height="48">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+                    <p class="upload-area-title">Click to select violations CSV file</p>
+                    <p class="upload-area-sub">Supports .csv files up to 500 rows</p>
+                </div>
+                <input type="file" id="violations-file" accept=".csv" style="display:none" onchange="handleViolationsUpload(event)">
+                <div id="violations-upload-status"></div>
+                <div class="upload-actions">
+                    <button class="btn btn-secondary" onclick="downloadViolationsTemplate()">Download Template CSV</button>
+                </div>
+            </div>
+
+            <!-- Upload Violation Papers -->
+            <div class="section">
+                <h2>Upload Violation &amp; Inspection Reports</h2>
+                <p style="color:var(--text-secondary);margin-bottom:var(--spacing-lg);">Upload photos of roadside inspection reports, Driver/Vehicle Inspection Reports (DVIR), violation tickets, and other paper documents for your records.</p>
+                <div class="csv-format">
+                    <strong>Examples:</strong> Roadside inspection reports, DVIR forms, violation citations, officer notices
+                    <br><strong>Accepted formats:</strong> JPG, JPEG, PNG &nbsp;&nbsp; <strong>Max size:</strong> 10 MB per image
+                </div>
+                <div class="upload-area" onclick="document.getElementById('image-file').click()">
+                    <div class="upload-area-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="48" height="48">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                    </div>
+                    <p class="upload-area-title">Click to upload inspection report or violation paper</p>
+                    <p class="upload-area-sub">Take a photo of the paper document — JPG or PNG, up to 10 MB</p>
+                </div>
+                <input type="file" id="image-file" accept=".jpg,.jpeg,.png" style="display:none" onchange="handleImageUpload(event)">
+                <div id="image-upload-status"></div>
+                <div id="image-gallery" class="image-gallery"></div>
+            </div>
+
+            <!-- Upload Trucks -->
+            <div class="section">
+                <h2>Bulk Add Trucks</h2>
+                <p style="color:var(--text-secondary);margin-bottom:var(--spacing-lg);">Add multiple trucks at once by uploading a CSV file.</p>
+                <div class="csv-format">
+                    <strong>Required CSV columns:</strong>
+                    <code>truck_name, truck_id</code>
+                </div>
+                <div class="upload-area" onclick="document.getElementById('trucks-file').click()">
+                    <div class="upload-area-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="48" height="48">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+                    <p class="upload-area-title">Click to select trucks CSV file</p>
+                    <p class="upload-area-sub">Supports .csv files up to 200 rows</p>
+                </div>
+                <input type="file" id="trucks-file" accept=".csv" style="display:none" onchange="handleTrucksUpload(event)">
+                <div id="trucks-upload-status"></div>
+                <div class="upload-actions">
+                    <button class="btn btn-secondary" onclick="downloadTrucksTemplate()">Download Template CSV</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports View -->
+        <div id="reports-view" class="view">
+            <div class="header">
+                <h1>Inspection Reports</h1>
+                <p>Review uploaded inspection documents — classify each as ELD violation, other violation, or clean</p>
+            </div>
+            <div id="reports-list">
+                <p class="loading">Loading reports...</p>
+            </div>
+        </div>
+
+        <!-- Support View -->
+        <div id="support-view" class="view">
+            <div class="header">
+                <h1>Support Center</h1>
+            </div>
+
+            <!-- Create Ticket -->
+            <div class="section">
+                <h2>Create Support Ticket</h2>
+                <form onsubmit="createTicket(event)" class="ticket-form">
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <input type="text" id="ticket-subject" required placeholder="Brief description of issue">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="ticket-description" required placeholder="Detailed explanation"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="ticket-priority">
+                            <option value="low">Low</option>
+                            <option value="normal" selected>Normal</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Ticket</button>
+                </form>
+            </div>
+
+            <!-- Open Tickets -->
+            <div class="section">
+                <h2>Your Tickets</h2>
+                <div id="support-tickets" class="tickets-list">
+                    <p class="loading">Loading tickets...</p>
+                </div>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="section">
+                <h2>Contact Information</h2>
+                <div class="contact-grid">
+                    <div class="contact-card">
+                        <div class="icon">@</div>
+                        <h3>Email</h3>
+                        <p>support@eldportal.com</p>
+                    </div>
+                    <div class="contact-card">
+                        <div class="icon">PH</div>
+                        <h3>Phone</h3>
+                        <p>1-800-ELD-HELP (1-800-353-4357)</p>
+                    </div>
+                    <div class="contact-card">
+                        <div class="icon">CH</div>
+                        <h3>Chat</h3>
+                        <p>Live chat 9AM-5PM EST</p>
+                    </div>
+                    <div class="contact-card">
+                        <div class="icon">2h</div>
+                        <h3>Response Time</h3>
+                        <p>Usually within 2 hours</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ View -->
+        <div id="faq-view" class="view">
+            <div class="header">
+                <h1>Frequently Asked Questions</h1>
+                <input type="text" id="faq-search" placeholder="Search FAQs..." class="search-box" onkeyup="filterFAQ()">
+            </div>
+
+            <div id="faqs-list" class="faqs">
+                <p class="loading">Loading FAQs...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2025 ELD Customer Portal. All rights reserved.</p>
+        <p>Helping trucking companies stay compliant and grow.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
+

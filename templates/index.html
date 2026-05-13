@@ -1,0 +1,260 @@
+﻿<!-- templates/index.html - Landing & Login Page -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELD Customer Portal - Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="logo">ELD Portal</div>
+            <div class="nav-menu">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#benefits" class="nav-link">Benefits</a>
+                <a href="#pricing" class="nav-link">Pricing</a>
+                <button class="btn btn-primary" onclick="showLoginForm()">Login</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Professional ELD Compliance Management</h1>
+                <p>Real-time monitoring, compliance tracking, and support - all in one platform</p>
+                <button class="btn btn-large btn-primary" onclick="showLoginForm()">Get Started</button>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features" id="features">
+            <div class="section-label">Why Choose ELD Portal</div>
+            <h2>Powerful Features</h2>
+            <p class="section-subtitle">Everything your fleet needs to stay compliant and grow</p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon-wrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                    </div>
+                    <h3>Real-Time Data</h3>
+                    <p>See your compliance score and device status instantly with live updates</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-wrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                        </svg>
+                    </div>
+                    <h3>Knowledge Base</h3>
+                    <p>Find answers to common questions immediately - 70% faster support</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-wrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                    </div>
+                    <h3>Support Tickets</h3>
+                    <p>Submit and track support requests with guaranteed 2-hour response</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-wrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="10"/>
+                            <line x1="12" y1="20" x2="12" y2="4"/>
+                            <line x1="6" y1="20" x2="6" y2="14"/>
+                            <line x1="2" y1="20" x2="22" y2="20"/>
+                        </svg>
+                    </div>
+                    <h3>Performance Reports</h3>
+                    <p>Download detailed compliance and performance reports anytime</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-wrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        </svg>
+                    </div>
+                    <h3>Smart Alerts</h3>
+                    <p>Get notified of issues before they become problems</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-wrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                    </div>
+                    <h3>24/7 Access</h3>
+                    <p>Access your data anytime, anywhere on any device</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Benefits Section -->
+        <section class="benefits" id="benefits">
+            <h2>Why Choose Us?</h2>
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-number">70%</div>
+                    <h3>Faster Support</h3>
+                    <p>Get answers to common questions instantly without waiting for support</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-number">24/7</div>
+                    <h3>Always Available</h3>
+                    <p>Access your compliance data whenever you need it</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-number">100%</div>
+                    <h3>Full Visibility</h3>
+                    <p>See exactly how many devices and violations you have</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-number">$</div>
+                    <h3>Save Money</h3>
+                    <p>Prevent violations before they happen and avoid costly fines</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing Section -->
+        <section class="pricing" id="pricing">
+            <h2>Simple, Transparent Pricing</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>Startup</h3>
+                    <div class="price">$1,000<span>/month</span></div>
+                    <ul>
+                        <li> Up to 10 devices</li>
+                        <li> Basic support</li>
+                        <li> Email alerts</li>
+                        <li> Monthly reports</li>
+                    </ul>
+                    <button class="btn btn-secondary">Get Started</button>
+                </div>
+                <div class="pricing-card featured">
+                    <div class="badge">Popular</div>
+                    <h3>Business</h3>
+                    <div class="price">$5,000<span>/month</span></div>
+                    <ul>
+                        <li> Up to 50 devices</li>
+                        <li> Priority support</li>
+                        <li> Real-time alerts</li>
+                        <li> Weekly reports</li>
+                        <li> Compliance coaching</li>
+                    </ul>
+                    <button class="btn btn-primary">Get Started</button>
+                </div>
+                <div class="pricing-card">
+                    <h3>Enterprise</h3>
+                    <div class="price">Custom<span>/month</span></div>
+                    <ul>
+                        <li> Unlimited devices</li>
+                        <li> 24/7 phone support</li>
+                        <li> Real-time alerts</li>
+                        <li> Daily reports</li>
+                        <li> Dedicated manager</li>
+                    </ul>
+                    <button class="btn btn-secondary">Contact Sales</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta">
+            <h2>Ready to Improve Your Compliance?</h2>
+            <p>Join hundreds of trucking companies that trust us</p>
+            <button class="btn btn-large btn-primary" onclick="showLoginForm()">Login to Your Account</button>
+        </section>
+    </main>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeLoginForm()"></button>
+            
+            <!-- Login Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="login" onclick="switchTab('login')">Login</button>
+                <button class="tab-btn" data-tab="register" onclick="switchTab('register')">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-tab" class="tab-content active">
+                <h2>Login to Your Portal</h2>
+                <form onsubmit="handleLogin(event)" class="login-form">
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="login-email" required placeholder="your@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="login-password" required placeholder="">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+                    </div>
+                </form>
+                <p class="demo-hint">Demo: admin@abctrucking.com / demo123</p>
+                <p class="forgot-password"><a href="#" onclick="alert('Contact support to reset password')">Forgot password?</a></p>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-tab" class="tab-content">
+                <h2>Create Company Account</h2>
+                <form onsubmit="handleRegister(event)" class="login-form">
+                    <div class="form-group">
+                        <label>Company Name</label>
+                        <input type="text" id="register-company" required placeholder="Your Company Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="register-email" required placeholder="your@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" id="register-first-name" required placeholder="First Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" id="register-last-name" required placeholder="Last Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="register-password" required placeholder="" minlength="8">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" required>
+                            I agree to the Terms of Service
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2025 ELD Customer Portal. All rights reserved.</p>
+        <p>Helping trucking companies stay compliant and grow.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/landing.js') }}"></script>
+</body>
+</html>
+

@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database Service
+  db:
+    image: postgres:15-alpine
+    container_name: eld_portal_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: eld_portal
+      POSTGRES_USER: eld_user
+      POSTGRES_PASSWORD: eld_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - eld_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eld_user -d eld_portal"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Flask Web Application Service
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eld_portal_web
+    restart: unless-stopped
+    command: gunicorn -w 4 -b 0.0.0.0:5000 --access-logfile - --error-logfile - wsgi:app
+    environment:
+      FLASK_APP: app.py
+      FLASK_ENV: production
+      DATABASE_URL: postgresql://eld_user:eld_password@db:5432/eld_portal
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-this-in-production}
+      JWT_EXPIRATION_HOURS: 24
+    volumes:
+      - .:/app
+    ports:
+      - "5000:5000"
+    networks:
+      - eld_network
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  eld_network:
+    driver: bridge
+
+# Environment variables for docker-compose
+# Create a .env file with:
+# SECRET_KEY=your-long-random-secret-key-here
+# 
+# Run with:
+# docker-compose up --build
+#
+# Initialize database:
+# docker-compose exec web python -c "from app import app, db; db.create_all()"
+#
+# View logs:
+# docker-compose logs -f web
+#
+# Stop services:
+# docker-compose down
+#
+# Remove everything including volumes:
+# docker-compose down -v
