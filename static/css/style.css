@@ -1,9 +1,9 @@
 /* static/css/style.css - Global Styles */
 
 :root {
-    /* Ultramarine deep base */
-    --primary-color: #130740;
-    --secondary-color: #1C0E68;
+    /* Uranium green base */
+    --primary-color: #162B00;
+    --secondary-color: #1E3800;
     /* Solar Lava accent */
     --accent-color: #FF4500;
     /* Status colors */
@@ -12,15 +12,15 @@
     --danger-color: #FF2830;
     --critical-color: #FF0020;
 
-    /* Ultramarine + Uranium dark backgrounds */
-    --bg-primary: #07032A;
-    --bg-secondary: #040118;
-    --bg-tertiary: #0D0645;
-    /* Pale lavender text on ultramarine */
-    --text-primary: #E6E0FF;
-    --text-secondary: #8880C0;
-    --text-tertiary: #50488A;
-    --border-color: #1E1060;
+    /* Uranium dark backgrounds */
+    --bg-primary: #172C00;
+    --bg-secondary: #102000;
+    --bg-tertiary: #1F3800;
+    /* Light text on uranium dark */
+    --text-primary: #D8FFB0;
+    --text-secondary: #88BB50;
+    --text-tertiary: #506830;
+    --border-color: #2E5000;
 
     --spacing-xs: 4px;
     --spacing-sm: 8px;
@@ -1862,13 +1862,13 @@ main {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   THEME — Solar Lava · Ultramarine + Uranium · Rosewood · Pine Tree
+   THEME — Solar Lava · Uranium · Rosewood · Pine Tree
    Solar Lava:  #FF4500 / #FF6535   — headings, accents, logo, buttons
-   Ultramarine: #07032A / #040118   — deep backgrounds (cards, body)
-   Uranium:     #AAFF00 / #C8FF14   — clean/good indicators, fines stat
+   Uranium:     #172C00 / #1F3800   — card & section backgrounds (green-dark)
+   Uranium glow:#AAFF00 / #C8FF14   — clean indicators, fines stat, badges
    Rosewood:    #8B0018 / #6B0010   — violation/danger left borders
    Pine Tree:   #00C050 / #007830   — compliance/success states
-   Night Blue:  #1E1060 / #0D0645   — borders, inputs, subtle accents
+   Border:      #2E5000             — subtle uranium-green borders
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Page ── */
@@ -2195,4 +2195,4 @@ option { background: var(--bg-primary); color: var(--text-primary); }
 .close-btn:hover { color: var(--text-primary) !important; }
 .toast-success { background: linear-gradient(135deg, #007830, #00C050) !important; color: white !important; }
 .toast-error { background: linear-gradient(135deg, #6B0010, #8B0018) !important; color: white !important; }
-.toast-info { background: #130740 !important; color: var(--text-primary) !important; }
+.toast-info { background: #162B00 !important; color: var(--text-primary) !important; }
