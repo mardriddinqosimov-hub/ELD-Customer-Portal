@@ -105,18 +105,33 @@ async function loadTrucks() {
                 </div>`;
             return;
         }
-        container.innerHTML = trucks.map(t => `
+        container.innerHTML = trucks.map(t => {
+            const isActive = t.status === 'active';
+            const driverDisplay = t.driver_name
+                ? escapeHtml(t.driver_name)
+                : '<span style="color:var(--text-secondary)">Not assigned</span>';
+            return `
             <div class="device-card status-${escapeHtml(t.status)}">
                 <div class="device-header">
                     <h3>${escapeHtml(t.device_name)}</h3>
                     <div class="device-header-actions">
                         <span class="device-status">${escapeHtml(t.status).toUpperCase()}</span>
+                        <button class="${isActive ? 'btn-deactivate' : 'btn-activate'}" onclick="toggleTruckStatus(${t.id}, '${isActive ? 'inactive' : 'active'}')">${isActive ? 'Set Inactive' : 'Set Active'}</button>
                         <button class="btn-remove" onclick="deleteTruck(${t.id})">Remove</button>
                     </div>
                 </div>
                 <div class="device-body">
                     <p><strong>Truck ID:</strong> ${escapeHtml(t.device_id)}</p>
-                    <p><strong>Driver:</strong> ${t.driver_name ? escapeHtml(t.driver_name) : '<span style="color:var(--text-secondary)">Not assigned</span>'}</p>
+                    <p class="driver-row">
+                        <strong>Driver:</strong>
+                        <span id="driver-display-${t.id}">${driverDisplay}</span>
+                        <button class="btn-link driver-edit-btn" id="driver-edit-btn-${t.id}" onclick="showDriverEdit(${t.id})">Edit</button>
+                    </p>
+                    <div id="driver-edit-${t.id}" class="driver-edit-row" style="display:none;">
+                        <input type="text" id="driver-input-${t.id}" value="${escapeHtml(t.driver_name || '')}" placeholder="Driver's full name">
+                        <button class="btn btn-sm btn-primary" onclick="saveDriver(${t.id})">Save</button>
+                        <button class="btn btn-sm btn-secondary" onclick="hideDriverEdit(${t.id})">Cancel</button>
+                    </div>
                     <p><strong>Added:</strong> ${new Date(t.created_at).toLocaleDateString()}</p>
                 </div>
                 <div class="device-summary">
@@ -129,8 +144,8 @@ async function loadTrucks() {
                         <span class="summary-label">ELD Violations</span>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
     } catch (error) {
         document.getElementById('trucks-list').innerHTML = '<p class="no-data">Error loading trucks.</p>';
     }
@@ -164,6 +179,42 @@ async function deleteTruck(truckId) {
         await api.deleteTruck(truckId);
         await loadTrucks();
         showToast('Truck removed.', 'success');
+    } catch (error) {
+        showToast(`Error: ${error.message}`, 'error');
+    }
+}
+
+async function toggleTruckStatus(truckId, newStatus) {
+    const label = newStatus === 'inactive' ? 'mark as inactive' : 'reactivate';
+    if (!confirm(`Are you sure you want to ${label} this truck?`)) return;
+    try {
+        await api.updateTruck(truckId, { status: newStatus });
+        await loadTrucks();
+        showToast(newStatus === 'inactive' ? 'Truck set to inactive.' : 'Truck reactivated.', 'success');
+    } catch (error) {
+        showToast(`Error: ${error.message}`, 'error');
+    }
+}
+
+function showDriverEdit(truckId) {
+    document.getElementById(`driver-display-${truckId}`).style.display = 'none';
+    document.getElementById(`driver-edit-btn-${truckId}`).style.display = 'none';
+    document.getElementById(`driver-edit-${truckId}`).style.display = 'flex';
+    document.getElementById(`driver-input-${truckId}`).focus();
+}
+
+function hideDriverEdit(truckId) {
+    document.getElementById(`driver-display-${truckId}`).style.display = '';
+    document.getElementById(`driver-edit-btn-${truckId}`).style.display = '';
+    document.getElementById(`driver-edit-${truckId}`).style.display = 'none';
+}
+
+async function saveDriver(truckId) {
+    const name = document.getElementById(`driver-input-${truckId}`).value.trim();
+    try {
+        await api.updateTruck(truckId, { driver_name: name });
+        showToast('Driver updated!', 'success');
+        await loadTrucks();
     } catch (error) {
         showToast(`Error: ${error.message}`, 'error');
     }
@@ -348,6 +399,9 @@ async function loadReports() {
         container.querySelectorAll('button[data-report-id]').forEach(btn => {
             btn.addEventListener('click', () => submitReview(parseInt(btn.dataset.reportId)));
         });
+        container.querySelectorAll('button[data-delete-report-id]').forEach(btn => {
+            btn.addEventListener('click', () => deleteReport(parseInt(btn.dataset.deleteReportId)));
+        });
     } catch (error) {
         container.innerHTML = '<p class="no-data">Error loading reports.</p>';
     }
@@ -432,10 +486,22 @@ function renderReportCard(r, trucks = []) {
                     <p class="report-date">${new Date(r.uploaded_at).toLocaleString()}</p>
                     ${reviewedInfo}
                 </div>
+                <button class="btn-remove report-delete-btn" data-delete-report-id="${r.id}" title="Delete report">&#128465;</button>
             </div>
             ${reviewForm}
         </div>
     `;
+}
+
+async function deleteReport(reportId) {
+    if (!confirm('Delete this report? This cannot be undone.')) return;
+    try {
+        await api.deleteReport(reportId);
+        showToast('Report deleted.', 'success');
+        await loadReports();
+    } catch (error) {
+        showToast(`Error: ${error.message}`, 'error');
+    }
 }
 
 async function submitReview(reportId) {

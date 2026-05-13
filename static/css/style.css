@@ -1353,6 +1353,68 @@ main {
     align-items: center;
 }
 
+.btn-deactivate {
+    background: #FEF3C7;
+    color: #92400E;
+    border: none;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.btn-deactivate:hover { background: #F59E0B; color: white; }
+
+.btn-activate {
+    background: #D1FAE5;
+    color: #065F46;
+    border: none;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.btn-activate:hover { background: var(--success-color); color: white; }
+
+.driver-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.driver-edit-btn {
+    font-size: 0.8rem;
+    padding: 0;
+    opacity: 0.6;
+}
+.driver-edit-btn:hover { opacity: 1; }
+
+.driver-edit-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.driver-edit-row input {
+    flex: 1;
+    min-width: 160px;
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+}
+
+.btn-sm {
+    padding: 5px 12px !important;
+    font-size: 0.82rem !important;
+}
+
 .btn-remove {
     background: #FEE2E2;
     color: var(--danger-color);
@@ -1508,7 +1570,17 @@ main {
     display: flex;
     gap: var(--spacing-lg);
     align-items: flex-start;
+    position: relative;
 }
+
+.report-delete-btn {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 16px;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+}
+.report-delete-btn:hover { opacity: 1; }
 
 .report-thumb {
     width: 130px;

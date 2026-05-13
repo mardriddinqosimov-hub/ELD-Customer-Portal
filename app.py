@@ -400,6 +400,25 @@ def add_truck(current_user):
     return jsonify({'message': 'Truck added successfully', 'id': truck.id}), 201
 
 
+@app.route('/api/trucks/<int:truck_id>', methods=['PATCH'])
+@token_required
+def update_truck(current_user, truck_id):
+    truck = Device.query.filter_by(id=truck_id, company_id=current_user.company_id).first()
+    if not truck:
+        return jsonify({'message': 'Truck not found'}), 404
+
+    data = request.get_json(silent=True) or {}
+    if 'driver_name' in data:
+        truck.driver_name = (data['driver_name'] or '').strip() or None
+    if 'status' in data:
+        if data['status'] not in {'active', 'inactive'}:
+            return jsonify({'message': 'Invalid status'}), 400
+        truck.status = data['status']
+
+    db.session.commit()
+    return jsonify({'message': 'Truck updated', 'id': truck.id}), 200
+
+
 @app.route('/api/trucks/<int:truck_id>', methods=['DELETE'])
 @token_required
 def delete_truck(current_user, truck_id):
@@ -537,6 +556,25 @@ def get_reports(current_user):
             'truck_unit_id': truck.device_id if truck else None
         })
     return jsonify({'reports': result}), 200
+
+
+@app.route('/api/reports/<int:report_id>', methods=['DELETE'])
+@token_required
+def delete_report(current_user, report_id):
+    report = InspectionReport.query.filter_by(id=report_id, company_id=current_user.company_id).first()
+    if not report:
+        return jsonify({'message': 'Report not found'}), 404
+
+    file_path = os.path.join(UPLOAD_FOLDER, str(current_user.company_id), os.path.basename(report.filename))
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+    except OSError:
+        pass
+
+    db.session.delete(report)
+    db.session.commit()
+    return jsonify({'message': 'Report deleted'}), 200
 
 
 @app.route('/api/reports/<int:report_id>/review', methods=['POST'])

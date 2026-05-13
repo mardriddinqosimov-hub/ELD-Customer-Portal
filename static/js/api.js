@@ -95,6 +95,10 @@ class APIClient {
         return this.request('POST', '/trucks', { truck_name, truck_id, driver_name });
     }
 
+    updateTruck(id, data) {
+        return this.request('PATCH', `/trucks/${id}`, data);
+    }
+
     deleteTruck(id) {
         return this.request('DELETE', `/trucks/${id}`);
     }
@@ -113,6 +117,10 @@ class APIClient {
 
     getReports() {
         return this.request('GET', '/reports');
+    }
+
+    deleteReport(id) {
+        return this.request('DELETE', `/reports/${id}`);
     }
 
     reviewReport(id, data) {
