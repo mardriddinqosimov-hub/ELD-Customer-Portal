@@ -1880,7 +1880,7 @@ body {
 
 /* ── Navbar ── */
 .navbar {
-    background: linear-gradient(90deg, #02000C 0%, #07013A 55%, #030014 100%) !important;
+    background: linear-gradient(90deg, #000E18 0%, #001828 50%, #002030 100%) !important;
     border-bottom: 1px solid #2A0C80;
     box-shadow: 0 2px 40px rgba(0,0,0,0.92) !important;
 }
